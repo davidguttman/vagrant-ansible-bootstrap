@@ -1,0 +1,25 @@
+- name: Create admin group
+  group: name=admin state=present
+
+- name: Ensure sudo,admin groups exists
+  group: name={{item}} state=present
+  with_items:
+    - sudo
+    - admin
+
+- name: Ensure deploy user is admin
+  user:
+    name: "{{ user }}"
+    state: present
+    groups: sudo,admin
+    shell: /bin/bash
+    home: "/home/{{ user }}"
+
+- name: Ensure authorized keys for deploy user
+  authorized_key:
+    user: "{{ user }}"
+    key: "{{ lookup('file', public_key) }}"
+
+# Copy a new "sudoers" file into place, after passing validation with visudo
+- name: Copy sudoers file
+  copy: src=sudoers dest=/etc/sudoers validate='visudo -cf %s'
